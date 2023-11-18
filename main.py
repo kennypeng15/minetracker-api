@@ -115,19 +115,19 @@ def data():
         try:
             board_3bv_threshold = float(query_board_3bv_threshold)
         except:
-            return "Invalid filter - board 3bv treshoold not a valid number", 400
+            return "Invalid filter - board 3bv treshold not a valid number", 400
         
     if query_efficiency_threshold is not None:
         try:
             effiency_threshold = float(query_efficiency_threshold)
         except:
-            return "Invalid filter - efficiency treshoold not a valid number", 400
+            return "Invalid filter - efficiency treshold not a valid number", 400
         
     if query_solved_percent_threshold is not None:
         try:
             solved_percent_threshold = float(query_solved_percent_threshold)
         except:
-            return "Invalid filter - solved percent treshoold not a valid number", 400
+            return "Invalid filter - solved percent treshold not a valid number", 400
         # TODO: for this one in particular, the threshold needs to be greater or equal to 50
 
     # print(solved_only, difficulty, board_3bv_threshold, solved_percent_threshold, effiency_threshold)
