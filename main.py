@@ -37,7 +37,15 @@ refresh_threshold = 60 * 60 * refresh_hours
 def index():
     # TODO this should probably return something more substantial (a full html? can you do that?)
     # that just explains the endpoints available (just 1) and the args you can pass / it expects
-    return "<p>Welcome! This API is currently a work in progress.</p>"
+    return "<h1>Welcome to MineTracker!</h1> \
+    <p>Please note that this API is still somewhat a work-in-progress.</p> \
+    <p>The primary endpoint of interest here is /data, which is a GET endpoint returning data about minesweeper.online games.</p> \
+    <p>The endpoint takes in some optional query parameter:s</p>  \
+    <p>solved: values either [true, false], default true. indicates if you want to receive only data about solved games.</p> \
+    <p>difficulty: values either [beginner, intermediate, expert], default expert. indicates which difficulty you want data about.</p> \
+    <p>3bv_threshold: values any positive integer. defines the minimum board 3bv for games you want data about.</p> \
+    <p>solved_percent_threshold: values any positive integer. defines the minimum solved percentage for games you want data about.</p> \
+    <p>efficiency_threshold: values any positive integer. defines the minimum efficiency for games you want data about.</p>"
 
 # the main one
 @app.route("/data", methods=['GET'])
