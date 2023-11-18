@@ -1,5 +1,4 @@
 from flask import Flask, request
-from flask_cors import CORS, cross_origin
 import pandas as pd
 import simplejson
 from dotenv import load_dotenv
@@ -9,10 +8,6 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-
-# needed for local debugging
-# CORS(app)
-# app.config["CORS_HEADERS"] = "Content-Type"
 
 # load necessary environment variables
 dotenv_path = join(dirname(__file__), '.env')
