@@ -144,6 +144,6 @@ def data():
     if not solved_only:
         return_data = return_data.loc[return_data["solve-percentage"] >= float(solved_percent_threshold)]
 
-    response = simplejson.loads(return_data.to_json(orient="records"))
-    # print(simplejson.dumps(response, indent=2))
+    response = return_data.to_json(orient="records")
+    # print(response)
     return response
