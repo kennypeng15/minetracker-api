@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from os.path import join, dirname
 import boto3
 import os
-from datetime import *
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -39,11 +39,13 @@ def index():
     <p>Please note that this API is still somewhat a work-in-progress.</p> \
     <p>The primary endpoint of interest here is /data, which is a GET endpoint returning data about minesweeper.online games.</p> \
     <p>The endpoint takes in some optional query parameters:</p>  \
-    <p>  solved: values either [true, false], default true. indicates if you want to receive only data about solved games.</p> \
-    <p>  difficulty: values either [beginner, intermediate, expert], default expert. indicates which difficulty you want data about.</p> \
-    <p>  3bv_threshold: values any positive integer. defines the minimum board 3bv for games you want data about.</p> \
-    <p>  solved_percent_threshold: values any positive integer. defines the minimum solved percentage for games you want data about.</p> \
-    <p>  efficiency_threshold: values any positive integer. defines the minimum efficiency for games you want data about.</p>"
+    <ul> \
+    <li>solved: values either [true, false], default true. indicates if you want to receive only data about solved games.</li> \
+    <li>difficulty: values either [beginner, intermediate, expert], default expert. indicates which difficulty you want data about.</li> \
+    <li>3bv_threshold: values any positive integer. defines the minimum board 3bv for games you want data about.</li> \
+    <li>solved_percent_threshold: values any positive integer. defines the minimum solved percentage for games you want data about.</li> \
+    <li>efficiency_threshold: values any positive integer. defines the minimum efficiency for games you want data about.</li> \
+    </ul>"
 
 # the main one
 @app.route("/data", methods=['GET'])
@@ -143,5 +145,5 @@ def data():
         return_data = return_data.loc[return_data["solve-percentage"] >= float(solved_percent_threshold)]
 
     response = simplejson.loads(return_data.to_json(orient="records"))
-    print(simplejson.dumps(response, indent=2))
+    # print(simplejson.dumps(response, indent=2))
     return response
