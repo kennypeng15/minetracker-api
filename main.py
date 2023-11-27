@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask_cors import CORS, cross_origin
 import pandas as pd
 import simplejson
 from dotenv import load_dotenv
@@ -8,6 +9,10 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
+
+# enable cross-origin resource sharing
+CORS(app)
+app.config["CORS_HEADERS"] = "Content-Type"
 
 # load necessary environment variables
 dotenv_path = join(dirname(__file__), '.env')
@@ -29,6 +34,7 @@ refresh_hours = 24
 refresh_threshold = 60 * 60 * refresh_hours
 
 @app.route("/")
+@cross_origin()
 def index():
     return "<h1>Welcome to MineTracker!</h1> \
     <p>Please note that this API is still somewhat a work-in-progress.</p> \
@@ -44,7 +50,7 @@ def index():
 
 # the main one
 @app.route("/data", methods=['GET'])
-# @cross_origin()
+@cross_origin()
 def data():
     # use the globally declared cache and last scan value
     global all_db_data
