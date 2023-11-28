@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from os.path import join, dirname
 import boto3
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -33,20 +33,41 @@ last_scan_time = datetime(2020, 1, 1)
 refresh_hours = 24
 refresh_threshold = 60 * 60 * refresh_hours
 
+# provides information about the API itself - how to use, etc.
 @app.route("/")
 @cross_origin()
 def index():
     return "<h1>Welcome to MineTracker!</h1> \
-    <p>Please note that this API is still somewhat a work-in-progress.</p> \
-    <p>The primary endpoint of interest here is /data, which is a GET endpoint returning data about minesweeper.online games.</p> \
-    <p>The endpoint takes in some optional query parameters:</p>  \
-    <ul> \
-    <li>solved: values either [true, false], default true. indicates if you want to receive only data about solved games.</li> \
-    <li>difficulty: values either [beginner, intermediate, expert], default expert. indicates which difficulty you want data about.</li> \
-    <li>3bv_threshold: values any positive integer. defines the minimum board 3bv for games you want data about.</li> \
-    <li>solved_percent_threshold: values any positive integer. defines the minimum solved percentage for games you want data about.</li> \
-    <li>efficiency_threshold: values any positive integer. defines the minimum efficiency for games you want data about.</li> \
-    </ul>"
+        <p>Please note that this API is still somewhat a work-in-progress.</p> \
+        <p>The primary endpoint of interest here is /data, which is a GET endpoint returning data about minesweeper.online games.</p> \
+        <p>The endpoint takes in some optional query parameters:</p>  \
+        <ul> \
+        <li>solved: values either [true, false], default true. indicates if you want to receive only data about solved games.</li> \
+        <li>difficulty: values either [beginner, intermediate, expert], default expert. indicates which difficulty you want data about.</li> \
+        <li>3bv_threshold: values any positive integer. defines the minimum board 3bv for games you want data about.</li> \
+        <li>solved_percent_threshold: values any positive integer. defines the minimum solved percentage for games you want data about.</li> \
+        <li>efficiency_threshold: values any positive integer. defines the minimum efficiency for games you want data about.</li> \
+        </ul>"
+
+# provides diagnostic information about the API
+@app.route("/status")
+@cross_origin()
+def status():
+    # use the globally declared cache and last scan value
+    global all_db_data
+    global last_scan_time
+    global refresh_hours
+
+    # determine how many items are in the cache, and how long until next refresh
+    item_count = len(all_db_data)
+    next_refresh_time = last_scan_time + timedelta(hours=refresh_hours)
+    seconds_until_next_refresh = (next_refresh_time - datetime.now()).total_seconds()
+    
+    return f"<h1>MineTracker diagnostic information:</h1> \
+        <p>Item count (cache): {item_count}</p> \
+        <p>Last refresh time: {last_scan_time}</p> \
+        <p>Next refresh time: {next_refresh_time}</p> \
+        <p>Hours until next refresh: {seconds_until_next_refresh / 3600}</p>"
 
 # the main one
 @app.route("/data", methods=['GET'])
