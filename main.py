@@ -69,6 +69,22 @@ def status():
         <p>Next refresh time: {next_refresh_time}</p> \
         <p>Hours until next refresh: {seconds_until_next_refresh / 3600}</p>"
 
+# returns the timestamp of the most recently played game
+@app.route("/latest-timestamp")
+@cross_origin()
+def latest_timestamp():
+    # use the global cache
+    global all_db_data
+
+    # if the cache is empty, return something ambiguous
+    if len(all_db_data) == 0:
+        return { "latest-timestamp": "undefined" }
+    else:
+        # convert the data to a pandas dataframe for ease of use and filtering
+        all_data_df = pd.DataFrame(all_db_data)
+        max_date = max(all_data_df["game-timestamp"].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S%z')))
+        return { "latest-timestamp": max_date }
+
 # the main one
 @app.route("/data", methods=['GET'])
 @cross_origin()
