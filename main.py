@@ -81,6 +81,17 @@ def latest_timestamp():
         return { "latest-timestamp": "undefined" }
     else:
         # convert the data to a pandas dataframe for ease of use and filtering
+        # TODO: does this need to be converted to a dataframe? would list operations be faster?
+        # max_date = max(all_db_data.apply(lambda x: datetime.strptime(x["game-timestamp"], '%Y-%m-%d %H:%M:%S%z')))
+        # max_date = max([datetime.strptime(x["game-timestamp"], '%Y-%m-%d %H:%M:%S%z') for x in all_db_data])
+        # what we could do:
+            # read in the csv data (transformed as one case, untransformed as another) as pandas df, transform it back to list.
+            # use %timeit% (https://stackoverflow.com/questions/39736195/pandas-dataframe-performance-vs-list-performance)
+            # case 1: convert to dataframe, then apply lambda (what's running now)
+            # case 2: convert too dataframe, but use list comprehension
+            # case 3: leave as list, use apply
+            # case 4: leave as list, use list comprehension
+
         all_data_df = pd.DataFrame(all_db_data)
         max_date = max(all_data_df["game-timestamp"].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S%z')))
         return { "latest-timestamp": max_date }
@@ -116,9 +127,6 @@ def data():
         last_scan_time = datetime.now()
     else:
         print("using cached DB data.")
-
-    # convert the data to a pandas dataframe for ease of use and filtering
-    all_data_df = pd.DataFrame(all_db_data)
 
     # create some default values for what's processed from the query arguments.
     solved_only = True
@@ -169,6 +177,13 @@ def data():
         # TODO: for this one in particular, the threshold needs to be greater or equal to 50
 
     # print(solved_only, difficulty, board_3bv_threshold, solved_percent_threshold, effiency_threshold)
+
+    # convert the data to a pandas dataframe for ease of use and filtering
+    all_data_df = pd.DataFrame(all_db_data)
+
+    # TODO: similarly use %timeit% to see what's faster here!
+    # maybe make a subdirectory in this project or the migrator project called "testing"
+    # that contains what's needed, idk
 
     # build a return dataframe
     return_data = all_data_df
