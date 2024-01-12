@@ -1,6 +1,9 @@
 # minetracker-api
 ---
 
+(this README focuses on the API project only. for the write-up about MineTracker as a whole, 
+see https://kennypeng15.github.io/projects/minetracker/index.html)
+
 ## Overview and Design
 The (Flask) API for MineTracker.
 
