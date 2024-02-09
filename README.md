@@ -62,7 +62,7 @@ This necessitates the use of the scan operation instead of query. Repeated scan 
 have the potential to both be slow and very cost-incurring, so a basic in-memory cache is used to speed up
 delivery of API results and to avoid making repeated expensive calls to AWS.
 
-When the API starts up, the cache is unitialized and a "last request date" is set to sometime in the past.
+When the API starts up, the cache is uninitialized and a "last request date" is set to sometime in the past.
 When the first request to the `/data` endpoint is made, the API starts a full scan of the DynamoDB database
 and stores the results of the database as an in-memory list, caching it.
 The timestamp the scan was completed is stored.
