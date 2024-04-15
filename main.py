@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from os.path import join, dirname
 import boto3
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 app = Flask(__name__)
 
@@ -47,6 +47,8 @@ def index():
         <li>3bv_threshold: values any positive integer. defines the minimum board 3bv for games you want data about.</li> \
         <li>solved_percent_threshold: values any positive integer. defines the minimum solved percentage for games you want data about.</li> \
         <li>efficiency_threshold: values any positive integer. defines the minimum efficiency for games you want data about.</li> \
+        <li>earliest_date: values any date in MM-DD-YYYY format. defines the earliest date for games you want data about. \
+        <li>latest_date: values any date in MM-DD-YYYY format. defines the latest date for games you want data about.\
         </ul>"
 
 # provides diagnostic information about the API
@@ -62,7 +64,7 @@ def status():
     item_count = len(all_db_data)
     next_refresh_time = last_scan_time + timedelta(hours=refresh_hours)
     seconds_until_next_refresh = (next_refresh_time - datetime.now()).total_seconds()
-    
+
     return f"<h1>MineTracker diagnostic information:</h1> \
         <p>Item count (cache): {item_count}</p> \
         <p>Last refresh time: {last_scan_time}</p> \
@@ -104,7 +106,7 @@ def data():
     global all_db_data
     global last_scan_time
 
-    # if the time delta between now and the last_scan_time is more than refresh_threshold, 
+    # if the time delta between now and the last_scan_time is more than refresh_threshold,
     # initiate a full scan of the DB, and cache the results.
     # if not, used the cached data.
     if (datetime.now() - last_scan_time).total_seconds() > refresh_threshold:
@@ -134,7 +136,9 @@ def data():
     # minimums
     board_3bv_threshold = 0
     solved_percent_threshold = 50
-    effiency_threshold = 0
+    efficiency_threshold = 0
+    earliest_date = None
+    latest_date = None
 
     # actually process params from query args
     query_solved_only = request.args.get("solved")
@@ -142,12 +146,13 @@ def data():
     query_board_3bv_threshold = request.args.get("3bv_threshold")
     query_solved_percent_threshold = request.args.get("solved_percent_threshold")
     query_efficiency_threshold = request.args.get("efficiency_threshold")
+    earliest_date = request.args.get("earliest_date")
+    latest_date = request.args.get("latest_date")
     # TODO: 3bvps threshold ?
 
     # validate the query args
     if query_solved_only is not None:
         if query_solved_only.lower() not in ["true", "false"]:
-            print (query_solved_only.lower())
             return "Invalid filter - solved only value not one of two valid selections (true, false)", 400
         solved_only = query_solved_only.lower() == "true"
 
@@ -161,22 +166,34 @@ def data():
         try:
             board_3bv_threshold = float(query_board_3bv_threshold)
         except:
-            return "Invalid filter - board 3bv treshold not a valid number", 400
-        
+            return "Invalid filter - board 3bv threshold not a valid number", 400
+
     if query_efficiency_threshold is not None:
         try:
-            effiency_threshold = float(query_efficiency_threshold)
+            efficiency_threshold = float(query_efficiency_threshold)
         except:
-            return "Invalid filter - efficiency treshold not a valid number", 400
-        
+            return "Invalid filter - efficiency threshold not a valid number", 400
+
     if query_solved_percent_threshold is not None:
         try:
             solved_percent_threshold = float(query_solved_percent_threshold)
         except:
-            return "Invalid filter - solved percent treshold not a valid number", 400
+            return "Invalid filter - solved percent threshold not a valid number", 400
         # TODO: for this one in particular, the threshold needs to be greater or equal to 50
 
-    # print(solved_only, difficulty, board_3bv_threshold, solved_percent_threshold, effiency_threshold)
+    if earliest_date is not None:
+        try:
+            earliest_date = datetime.strptime(earliest_date, "%Y-%m-%d").astimezone(timezone.utc)
+        except:
+            return "Invalid filter - earliest date not a valid date", 400
+
+    if latest_date is not None:
+        try:
+            latest_date = datetime.strptime(latest_date, "%Y-%m-%d").astimezone(timezone.utc)
+        except:
+            return "Invalid filter - latest date not a valid date", 400
+
+    # print(solved_only, difficulty, board_3bv_threshold, solved_percent_threshold, efficiency_threshold, earliest_date, latest_date)
 
     # convert the data to a pandas dataframe for ease of use and filtering
     all_data_df = pd.DataFrame(all_db_data)
@@ -185,18 +202,22 @@ def data():
     # maybe make a subdirectory in this project or the migrator project called "testing"
     # that contains what's needed, idk
 
-    # build a return dataframe
-    return_data = all_data_df
+    # filter down to an appropriate return dataframe
     if solved_only:
-        return_data = all_data_df.loc[all_data_df["board-solved"]] # == True
-    
-    return_data = return_data.loc[return_data["difficulty"] == difficulty]
-    return_data = return_data.loc[return_data["board-3bv"] >= board_3bv_threshold]
-    return_data = return_data.loc[return_data["efficiency"] >= effiency_threshold]
+        all_data_df = all_data_df.loc[all_data_df["board-solved"]] # == True
+
+    all_data_df = all_data_df.loc[all_data_df["difficulty"] == difficulty]
+    all_data_df = all_data_df.loc[all_data_df["board-3bv"] >= board_3bv_threshold]
+    all_data_df = all_data_df.loc[all_data_df["efficiency"] >= efficiency_threshold]
 
     if not solved_only:
-        return_data = return_data.loc[return_data["solve-percentage"] >= float(solved_percent_threshold)]
+        all_data_df = all_data_df.loc[all_data_df["solve-percentage"] >= float(solved_percent_threshold)]
 
-    response = return_data.to_json(orient="records")
+    if earliest_date is not None:
+        all_data_df = all_data_df.loc[all_data_df["game-timestamp"].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S%z')) >= earliest_date]
+    if latest_date is not None:
+        all_data_df = all_data_df.loc[all_data_df["game-timestamp"].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S%z')) <= latest_date]
+
+    response = all_data_df.to_json(orient="records")
     # print(response)
     return response
